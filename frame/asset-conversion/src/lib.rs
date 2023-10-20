@@ -353,6 +353,8 @@ pub mod pallet {
 		PathError,
 		/// The provided path must consists of unique assets.
 		NonUniquePath,
+		/// It was not possible to get or increment the Id of the pool.
+		IncorrectPoolAssetId,
 		/// Unable to find an element in an array/vec that should have one-to-one correspondence
 		/// with another. For example, an array of assets constituting a `path` should have a
 		/// corresponding array of `amounts` along the path.
@@ -417,8 +419,10 @@ pub mod pallet {
 				}
 			}
 
-			let lp_token = NextPoolAssetId::<T>::get().unwrap_or(T::PoolAssetId::initial_value());
-			let next_lp_token_id = lp_token.increment();
+			let lp_token = NextPoolAssetId::<T>::get()
+				.or(T::PoolAssetId::initial_value())
+				.ok_or(Error::<T>::IncorrectPoolAssetId)?;
+			let next_lp_token_id = lp_token.increment().ok_or(Error::<T>::IncorrectPoolAssetId)?;
 			NextPoolAssetId::<T>::set(Some(next_lp_token_id));
 
 			T::PoolAssets::create(lp_token.clone(), pool_account.clone(), false, 1u32.into())?;
@@ -1118,7 +1122,9 @@ pub mod pallet {
 		/// Returns the next pool asset id for benchmark purposes only.
 		#[cfg(any(test, feature = "runtime-benchmarks"))]
 		pub fn get_next_pool_asset_id() -> T::PoolAssetId {
-			NextPoolAssetId::<T>::get().unwrap_or(T::PoolAssetId::initial_value())
+			NextPoolAssetId::<T>::get()
+				.or(T::PoolAssetId::initial_value())
+				.expect("Next pool asset ID can not be None")
 		}
 	}
 }
