@@ -140,12 +140,7 @@ use sp_std::{
 
 pub use pallet::*;
 pub use weights::WeightInfo;
-
-/// Decides whether the session should be ended.
-pub trait ShouldEndSession<BlockNumber> {
-	/// Return `true` if the session should be ended.
-	fn should_end_session(now: BlockNumber) -> bool;
-}
+pub use sp_session::ShouldEndSession;
 
 /// Ends the session after a fixed period of blocks.
 ///

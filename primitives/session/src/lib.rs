@@ -52,6 +52,12 @@ sp_api::decl_runtime_apis! {
 /// Number of validators in a given session.
 pub type ValidatorCount = u32;
 
+/// Decides whether the session should be ended.
+pub trait ShouldEndSession<BlockNumber> {
+	/// Return `true` if the session should be ended.
+	fn should_end_session(now: BlockNumber) -> bool;
+}
+
 /// Proof of membership of a specific key in a given session.
 #[derive(Encode, Decode, Clone, Eq, PartialEq, Default, RuntimeDebug, scale_info::TypeInfo)]
 pub struct MembershipProof {
