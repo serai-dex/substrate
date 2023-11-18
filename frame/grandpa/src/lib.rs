@@ -507,6 +507,55 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// This function is added later to be used in place of overly specific trait
+ 	/// implementation of OneSessionHandler::on_genesis_session.
+ 	pub fn genesis_session(authorities: AuthorityList) {
+		Self::initialize(&authorities);
+	}
+
+	/// This function is added later to be used in place of overly specific trait
+	/// implementation of OneSessionHandler::on_new_session.
+	pub fn new_session(changed: bool, session_index: u32, next_authorities: AuthorityList) {
+		// Always issue a change if `session` says that the validators have changed.
+		// Even if their session keys are the same as before, the underlying economic
+		// identities have changed.
+		let current_set_id = if changed || <Stalled<T>>::exists() {
+
+			let res = if let Some((further_wait, median)) = <Stalled<T>>::take() {
+				Self::schedule_change(next_authorities, further_wait, Some(median))
+			} else {
+				Self::schedule_change(next_authorities, Zero::zero(), None)
+			};
+
+			if res.is_ok() {
+				let current_set_id = CurrentSetId::<T>::mutate(|s| {
+					*s += 1;
+					*s
+				});
+
+				let max_set_id_session_entries = T::MaxSetIdSessionEntries::get().max(1);
+				if current_set_id >= max_set_id_session_entries {
+					SetIdSession::<T>::remove(current_set_id - max_set_id_session_entries);
+				}
+
+				current_set_id
+			} else {
+				// either the session module signalled that the validators have changed
+				// or the set was stalled. but since we didn't successfully schedule
+				// an authority set change we do not increment the set id.
+				Self::current_set_id()
+			}
+		} else {
+			// nothing's changed, neither economic conditions nor session keys. update the pointer
+			// of the current set.
+			Self::current_set_id()
+		};
+
+		// update the mapping to note that the current set corresponds to the
+		// latest equivalent session (i.e. now).
+		SetIdSession::<T>::insert(current_set_id, &session_index);
+	}
+
 	/// Deposit one of this module's logs.
 	fn deposit_log(log: ConsensusLog<BlockNumberFor<T>>) {
 		let log = DigestItem::Consensus(GRANDPA_ENGINE_ID, log.encode());
