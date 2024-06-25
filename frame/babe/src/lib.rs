@@ -166,6 +166,8 @@ pub mod pallet {
 			Option<Self::AccountId>,
 			(EquivocationProof<HeaderFor<Self>>, Self::KeyOwnerProof),
 		>;
+
+		type FindAuthor: FindAuthor<Self::AccountId>;
 	}
 
 	#[pallet::error]
