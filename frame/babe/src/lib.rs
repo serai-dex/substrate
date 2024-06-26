@@ -166,8 +166,6 @@ pub mod pallet {
 			Option<Self::AccountId>,
 			(EquivocationProof<HeaderFor<Self>>, Self::KeyOwnerProof),
 		>;
-
-		type FindAuthor: FindAuthor<Self::AccountId>;
 	}
 
 	#[pallet::error]
@@ -487,15 +485,16 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> FindAuthor<u32> for Pallet<T> {
-	fn find_author<'a, I>(digests: I) -> Option<u32>
+impl<T: Config> FindAuthor<T::AccountId> for Pallet<T> {
+	fn find_author<'a, I>(digests: I) -> Option<T::AccountId>
 	where
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		for (id, mut data) in digests.into_iter() {
 			if id == BABE_ENGINE_ID {
 				let pre_digest: PreDigest = PreDigest::decode(&mut data).ok()?;
-				return Some(pre_digest.authority_index())
+				let index = pre_digest.authority_index();
+				return Some(Self::authorities()[index as usize].0.clone().into())
 			}
 		}
 

@@ -111,7 +111,7 @@ impl<T, R, P, L>
 	OffenceReportSystem<Option<T::AccountId>, (EquivocationProof<HeaderFor<T>>, T::KeyOwnerProof)>
 	for EquivocationReportSystem<T, R, P, L>
 where
-	T: Config + pallet_authorship::Config + frame_system::offchain::SendTransactionTypes<Call<T>>,
+	T: Config + frame_system::offchain::SendTransactionTypes<Call<T>>,
 	R: ReportOffence<
 		T::AccountId,
 		P::IdentificationTuple,
@@ -167,7 +167,7 @@ where
 		let reporter = reporter.or_else(|| {
 			let digest = <frame_system::Pallet<T>>::digest();
 			let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
-			<T as Config>::FindAuthor::find_author(pre_runtime_digests)
+			Pallet<T>::find_author(pre_runtime_digests)
 		});
 		let offender = equivocation_proof.offender.clone();
 		let slot = equivocation_proof.slot;
