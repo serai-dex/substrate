@@ -167,7 +167,7 @@ where
 		let reporter = reporter.or_else(|| {
 			let digest = <frame_system::Pallet<T>>::digest();
 			let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
-			Pallet<T>::find_author(pre_runtime_digests)
+			Pallet::<T>::find_author(pre_runtime_digests)
 		});
 		let offender = equivocation_proof.offender.clone();
 		let slot = equivocation_proof.slot;

@@ -37,7 +37,7 @@ use sp_consensus_babe::{
 	EquivocationProof, Randomness as BabeRandomness, Slot, BABE_ENGINE_ID, RANDOMNESS_LENGTH,
 	RANDOMNESS_VRF_CONTEXT,
 };
-use sp_core::crypto::Wraps;
+use sp_core::{crypto::Wraps, sr25519::Public};
 use sp_runtime::{
 	generic::DigestItem,
 	traits::{IsMember, One, SaturatedConversion, Saturating, Zero},
@@ -120,7 +120,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
-	pub trait Config: pallet_timestamp::Config {
+	pub trait Config: pallet_timestamp::Config<AccountId = Public> {
 		/// The amount of time, in slots, that each epoch should last.
 		/// NOTE: Currently it is not possible to change the epoch duration after
 		/// the chain has started. Attempting to do so will brick block production.
