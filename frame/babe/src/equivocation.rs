@@ -34,7 +34,7 @@
 //! that the `ValidateUnsigned` for the BABE pallet is used in the runtime
 //! definition.
 
-use frame_support::traits::{Get, KeyOwnerProofSystem};
+use frame_support::traits::{Get, KeyOwnerProofSystem, FindAuthor};
 use frame_system::pallet_prelude::HeaderFor;
 use log::{error, info};
 
@@ -111,7 +111,7 @@ impl<T, R, P, L>
 	OffenceReportSystem<Option<T::AccountId>, (EquivocationProof<HeaderFor<T>>, T::KeyOwnerProof)>
 	for EquivocationReportSystem<T, R, P, L>
 where
-	T: Config + pallet_authorship::Config + frame_system::offchain::SendTransactionTypes<Call<T>>,
+	T: Config + frame_system::offchain::SendTransactionTypes<Call<T>>,
 	R: ReportOffence<
 		T::AccountId,
 		P::IdentificationTuple,
@@ -164,7 +164,11 @@ where
 		evidence: (EquivocationProof<HeaderFor<T>>, T::KeyOwnerProof),
 	) -> Result<(), DispatchError> {
 		let (equivocation_proof, key_owner_proof) = evidence;
-		let reporter = reporter.or_else(|| <pallet_authorship::Pallet<T>>::author());
+		let reporter = reporter.or_else(|| {
+			let digest = <frame_system::Pallet<T>>::digest();
+			let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
+			Pallet::<T>::find_author(pre_runtime_digests)
+		});
 		let offender = equivocation_proof.offender.clone();
 		let slot = equivocation_proof.slot;
 

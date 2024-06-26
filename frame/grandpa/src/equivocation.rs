@@ -37,7 +37,7 @@
 //! definition.
 
 use codec::{self as codec, Decode, Encode};
-use frame_support::traits::{Get, KeyOwnerProofSystem};
+use frame_support::traits::{Get, KeyOwnerProofSystem, FindAuthor};
 use frame_system::pallet_prelude::BlockNumberFor;
 use log::{error, info};
 use sp_consensus_grandpa::{AuthorityId, EquivocationProof, RoundNumber, SetId, KEY_TYPE};
@@ -123,7 +123,7 @@ impl<T, R, P, L>
 		(EquivocationProof<T::Hash, BlockNumberFor<T>>, T::KeyOwnerProof),
 	> for EquivocationReportSystem<T, R, P, L>
 where
-	T: Config + pallet_authorship::Config + frame_system::offchain::SendTransactionTypes<Call<T>>,
+	T: Config + frame_system::offchain::SendTransactionTypes<Call<T>>,
 	R: ReportOffence<
 		T::AccountId,
 		P::IdentificationTuple,
@@ -177,7 +177,11 @@ where
 		evidence: (EquivocationProof<T::Hash, BlockNumberFor<T>>, T::KeyOwnerProof),
 	) -> Result<(), DispatchError> {
 		let (equivocation_proof, key_owner_proof) = evidence;
-		let reporter = reporter.or_else(|| <pallet_authorship::Pallet<T>>::author());
+		let reporter = reporter.or_else(|| {
+			let digest = <frame_system::Pallet<T>>::digest();
+			let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
+			<T as Config>::FindAuthor::find_author(pre_runtime_digests)
+		});
 		let offender = equivocation_proof.offender().clone();
 
 		// We check the equivocation within the context of its set id (and

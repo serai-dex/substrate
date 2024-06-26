@@ -39,7 +39,7 @@ use frame_support::{
 	dispatch::{DispatchResultWithPostInfo, Pays},
 	pallet_prelude::Get,
 	storage,
-	traits::OneSessionHandler,
+	traits::{OneSessionHandler, FindAuthor},
 	weights::Weight,
 	WeakBoundedVec,
 };
@@ -117,6 +117,8 @@ pub mod pallet {
 			Option<Self::AccountId>,
 			(EquivocationProof<Self::Hash, BlockNumberFor<Self>>, Self::KeyOwnerProof),
 		>;
+
+		type FindAuthor: FindAuthor<Self::AccountId>;
 	}
 
 	#[pallet::hooks]
